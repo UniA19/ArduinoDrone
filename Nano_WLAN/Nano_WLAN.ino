@@ -1,7 +1,6 @@
 #include <SoftwareSerial.h>
 
 String getOutput();
-int i;
 
 SoftwareSerial ESP8266(11, 10);  //RX,TX
 
@@ -15,22 +14,22 @@ void setup()
   
   ESP8266.begin(9600);
   while(!ESP8266);
-  ESP8266.println("AT+GMR");
+  ESP8266.println("AT+GMR"); //checks version information
   getOutput();
   
-  ESP8266.println("ATE1");
+  ESP8266.println("ATE1"); //switches echo on
   getOutput();
   
-  ESP8266.println("AT+CWMODE=3");
+  ESP8266.println("AT+CWMODE=3"); //set SoftAP + Station mode
   getOutput();
 
   ESP8266.println("AT+CIPMUX=1"); //max 1 connection
   getOutput();
 
-  ESP8266.println("AT+CIPSERVER=1,100"); //start tcp server
+  ESP8266.println("AT+CIPSERVER=1,100"); //start tcp server, port
   getOutput();
 
-  ESP8266.println("AT+CWSAP_CUR=\"drone\",\"1234567890\",5,3");
+  ESP8266.println("AT+CWSAP_CUR=\"drone\",\"1234567890\",5,3"); //set ssid, password, channel, encryption (2: WPA2_PSK)
   getOutput();
 }
 
@@ -43,14 +42,14 @@ String getOutput()
 {
   String output = "";
   delay(100);
-  int i = 0;
+  bool newInput = 0;
   while(ESP8266.available()) {
-    i = 1;
+    newInput = 1;
     char c = (char)ESP8266.read();
     output.concat(c);
     if (c == '>') break;
   }
-  if (i == 1) {
+  if (newInput) {
     Serial.println(output);
   }
   return output;
