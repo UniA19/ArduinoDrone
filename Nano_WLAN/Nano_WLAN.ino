@@ -1,4 +1,3 @@
-#include <Adafruit_MPU6050.h>
 #include <Wire.h>
 #include <math.h>
 #include <SoftwareSerial.h>
