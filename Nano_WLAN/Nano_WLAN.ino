@@ -52,23 +52,23 @@ void setup()
   getWLAN();
   
   //Setup Gyro
-  Wire.begin(); //Needs SCL -> A5  SDA -> A4
+  /*Wire.begin(); //Needs SCL -> A5  SDA -> A4
   Wire.beginTransmission(MPU);
   Wire.write(0x6B);
   Wire.write(0);
   Wire.endTransmission(true);
-  calibrateGyro();
+  calibrateGyro();*/
 }
 
 void loop()
 {
   ++i;
   getWLAN();
-  printGyro();
+  /*printGyro();
   if (i % 10 == 0) {
     calibrateGyro();
-  }
-  delay(1000);
+  }*/
+  delay(10);
 }
 
 String getWLAN()
