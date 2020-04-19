@@ -38,10 +38,10 @@
 #define MAX_ANGLE_VELOCITY_YAW 30
 
 
-#define WLAN_SSID Drone         //Name of the drone visible for devices
-#define WLAN_PASSWORD dronepw   //WLAN Password
-#define WLAN_CHANNEL 5          //WLAN Channel
-#define WLAN_TIMEOUT 2500       //time in microseconds with no transmission that is still considered an active connection TODO: write function that lands the drone after lost connection
+#define WLAN_SSID "Drone"         //Name of the drone visible for devices
+#define WLAN_PASSWORD "dronepw"   //WLAN Password
+#define WLAN_CHANNEL "5"          //WLAN Channel
+#define WLAN_TIMEOUT "2500"       //time in microseconds with no transmission that is still considered an active connection TODO: write function that lands the drone after lost connection
 
 #include <I2Cdev.h>                           //Library for the MPU-6050 (Gyro and Accel)
 #include <MPU6050_6Axis_MotionApps_V6_12.h>   //Firmware for the built in Processor of the Gyroscope (D igital M otion P rocessor) (DMP)
@@ -156,10 +156,11 @@ void startupWireless()
   Serial.begin(115200); //The WLAN module is connected via Serial
   Serial.println("AT+UART_CUR=9600,8,1,0,0"); //Tell it to Slow down
   Serial.begin(9600);   //Slow down yourself
+  Serial.println("ATE0"); //switches echo (1: on 0: off)
   Serial.println("AT+CWMODE=3"); //set SoftAP + Station mode
+  Serial.println("AT+CIPMUX=1");  //multiple connections needed for tcp server!!
   Serial.println("AT+CIPSERVER=1,100"); //start TCP server using port 100
-  Serial.println("AT+CIPMUX=0");  //Permit only one User to connect
-  Serial.println("AT+CWSAP_CUR=\"WLAN_SSID\",\"WLAN_PASSWORD\",WLAN_CHANNEL,3,1"); //setting SSID, Password, Channel, Encryption (3=WPA2_PSK), Only one user again
+  Serial.println("AT+CWSAP_CUR=\"" + (String) WLAN_SSID + "\",\"" + (String) WLAN_PASSWORD + "\"," + (String) WLAN_CHANNEL + ",3,1"); //setting SSID, Password, Channel, Encryption (3=WPA2_PSK), Only one user
 }
 
 char parseSerialPercentage()                //Parses the next 4 Characters in Serial Buffer based on the Rules listed at the beginning of this Program
@@ -175,4 +176,11 @@ char parseSerialPercentage()                //Parses the next 4 Characters in Se
     percent -= (Serial.read() - '0') * 1;
   }
   return percent;
+}
+
+void send(String string)
+{
+  Serial.println("AT+CIPSENDBUF=0," + String(string.length()));
+  delay(2);//is needed for proper sending
+  Serial.println(string);
 }
