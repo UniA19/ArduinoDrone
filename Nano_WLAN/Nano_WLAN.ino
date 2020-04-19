@@ -12,8 +12,6 @@ const int MPU=0x68;
 int16_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
 int AcXOff, AcYOff, AcZOff, TmpOff, GyXOff, GyYOff, GyZOff;
 
-int i = 0;
-
 void setup()
 {
   Serial.begin(9600);
@@ -21,7 +19,11 @@ void setup()
   //Setup WLAN
   ESP8266.begin(115200);
   while(!ESP8266);
-  ESP8266.println("AT+UART_CUR=9600,8,1,0,0");
+  /*ESP8266.println("AT+RESTORE");//restore all defaults
+  delay(1000);
+  getWLAN();*/
+  
+  ESP8266.println("AT+UART_CUR=9600,8,1,0,0");//change serial connection
   delay(100);
   getWLAN();
   
@@ -31,7 +33,7 @@ void setup()
   delay(100);
   getWLAN();
   
-  ESP8266.println("ATE1"); //switches echo on
+  ESP8266.println("ATE0"); //switches echo (1: on 0: off)
   delay(100);
   getWLAN();
   
@@ -39,7 +41,7 @@ void setup()
   delay(100);
   getWLAN();
   
-  ESP8266.println("AT+CIPMUX=1"); //max 1 connection
+  ESP8266.println("AT+CIPMUX=1"); //multiple connections needed for tcp server!!
   delay(100);
   getWLAN();
   
@@ -47,7 +49,7 @@ void setup()
   delay(100);
   getWLAN();
   
-  ESP8266.println("AT+CWSAP_CUR=\"drone\",\"1234567890\",5,3"); //set ssid, password, channel, encryption (2: WPA2_PSK)
+  ESP8266.println("AT+CWSAP_CUR=\"drone\",\"1234567890\",5,3,1"); //set ssid, password, channel, encryption (3: WPA2_PSK)
   delay(100);
   getWLAN();
   
@@ -62,30 +64,34 @@ void setup()
 
 void loop()
 {
-  ++i;
   getWLAN();
-  /*printGyro();
-  if (i % 10 == 0) {
-    calibrateGyro();
-  }*/
   delay(10);
 }
 
 String getWLAN()
 {
   String output = "";
-  delay(100);
-  bool newInput = 0;
   while(ESP8266.available()) {
-    newInput = 1;
     char c = (char)ESP8266.read();
-    output.concat(c);
-    if (c == '>') break;
-  }
-  if (newInput) {
-    Serial.println(output);
+    while (c == '<') {
+      while(!ESP8266.available()) delay(1);
+      char d = (char)ESP8266.read();
+      if (d == '>') {
+        send(output);
+        Serial.println(output);
+        break;
+      }
+      output.concat(d);
+    }
   }
   return output;
+}
+
+void send(String string)
+{
+  ESP8266.println("AT+CIPSENDBUF=0," + String(string.length()));
+  delay(2);//is needed for proper sending
+  ESP8266.println(string);
 }
 
 void getGyro()
