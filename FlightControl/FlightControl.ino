@@ -23,6 +23,8 @@
  * 
  */
 
+#define TIMEOUT_DELAY   //Delay before the drone thinks its lost connection
+
 #define INTERRUPT_PIN 2 //this is the Pin the INT from the mpu is connected to. It is used to interrupt the program flow when new data is ready. (on Arduino UNO Pin 2 or 3)
 
 #define GYRO_OFFSET_X 51        //these values are taken from an example and quite the magic numbers TODO: find out how to calculate them and in general demystifying them
@@ -169,7 +171,7 @@ void startupWireless()
 char parseSerialPercentage()                //Parses the next 4 Characters in Serial Buffer based on the Rules listed at the beginning of this Program
 {
   char percent = 0;
-  while (Serial.available < 4);
+  while (!(Serial.available() < 4));
   if (Serial.read() == '+') {
     percent += (Serial.read() - '0') * 100;
     percent += (Serial.read() - '0') * 10;
