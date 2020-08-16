@@ -93,18 +93,21 @@ void loop()     //pushes the drone towards the desired state from the actual sta
 }
 
 
-
 //interrupt functions:
 void SerialEvent()                //Refreshes the global Variables that keep track of the desired drone state and updates the timer of when the last transmission took place.
 {
   if (Serial.read() != '<') return;      //checks if its a desired input from us or junk from the WLAN-module
   timeOfLastTransmission = micros();
+  while(!Serial.available());			 //wait for input.
   if (Serial.read() == '#') {                         //checks if its a command
     desiredYawSpeed = parseSerialPercentage() * (MAX_ANGLE_VELOCITY_YAW / 100);
+    while(!Serial.available());			 //wait for input.
     Serial.read(); //remove the seperator "|"
     desiredVelocityZ = parseSerialPercentage() * (MAX_VELOCITY_Z / 100.0);
+    while(!Serial.available());			 //wait for input.
     Serial.read(); //remove the seperator "|"
     desiredVelocityX = parseSerialPercentage() * (MAX_VELOCITY_X / 100.0);
+    while(!Serial.available());			 //wait for input.
     Serial.read(); //remove the seperator "|"
     desiredVelocityY = parseSerialPercentage() * (MAX_VELOCITY_Y / 100.0);
   } else {
@@ -166,6 +169,7 @@ void startupWireless()
 char parseSerialPercentage()                //Parses the next 4 Characters in Serial Buffer based on the Rules listed at the beginning of this Program
 {
   char percent = 0;
+  while (Serial.available < 4);
   if (Serial.read() == '+') {
     percent += (Serial.read() - '0') * 100;
     percent += (Serial.read() - '0') * 10;
