@@ -67,6 +67,7 @@ void setup()
 void loop()
 {
   getWLAN();
+  //send("Hallo");
   delay(10);
 }
 
@@ -75,18 +76,18 @@ String getWLAN()
   String output = "";
   while(ESP8266.available()) {
     char c = (char)ESP8266.read();
-    /*while (c == '<') {
+    while (c == '<') {
       while(!ESP8266.available()) delay(1);
       char d = (char)ESP8266.read();
       if (d == '>') {
         send(output);
         Serial.println(output);
         break;
-      }*/
-      output.concat(c);
-    
+      }
+      output.concat(d);
+    }
   }
-  if (output.length() > 1) Serial.println(output);
+  if (output.length() > 0) Serial.println(output);
   return output;
 }
 

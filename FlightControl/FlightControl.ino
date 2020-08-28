@@ -92,18 +92,19 @@ void setup()
 {
   Serial.begin(9600);
   startupWireless();
-  startupDMP();
+  //startupDMP();
   timeOfLastTransmission = micros();
 }
 
 void loop()     //pushes the drone towards the desired state from the actual state, those two are updated through interrupts
 {
-  SerialEvent();
+  SerialEventTest();
+  //pritGarbage();
 }
 
 
 //interrupt functions:
-void SerialEvent()                //Refreshes the global Variables that keep track of the desired drone state and updates the timer of when the last transmission took place.
+void SerialEventTest()                //Refreshes the global Variables that keep track of the desired drone state and updates the timer of when the last transmission took place.
 {
   if (!ESP8266.available()) return;
   if (ESP8266.read() != '<') return;      //checks if its a desired input from us or junk from the WLAN-module
@@ -124,6 +125,16 @@ void SerialEvent()                //Refreshes the global Variables that keep tra
   } else {
     
   }
+  String s = "New vaues: ";
+  s.concat(desiredYawSpeed);
+  s.concat(" ");
+  s.concat(desiredVelocityZ);
+  s.concat(" ");
+  s.concat(desiredVelocityX);
+  s.concat(" ");
+  s.concat(desiredVelocityY);
+  send(s);
+  Serial.println(s);
 }
 
 void pritGarbage()
