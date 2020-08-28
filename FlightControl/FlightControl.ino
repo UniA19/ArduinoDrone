@@ -115,6 +115,7 @@ void SerialEvent()                //Refreshes the global Variables that keep tra
   } else {
     
   }
+  send(sprintf("%f,%f,%f,%f", desiredYawSpeed, desiredVelocityZ, desiredVelocityX, desiredVelocityY));
 }
 
 void mpuInterrupt()               //Refreshes the global variables that tell the Drone its state. Gets executed everytime the mpu sends INT, thus everytime new data is ready.
