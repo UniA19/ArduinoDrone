@@ -1,3 +1,9 @@
+#include <I2Cdev.h>
+#include <SoftwareSerial.h>
+
+SoftwareSerial ESP8266(11, 10);  //RX,TX
+void pritGarbage();
+
 /*
  * This Program runs on the Arduino Nano to steer the Drone
  * It recieves Orders through Wifi as a String like such:
@@ -41,7 +47,7 @@
 
 
 #define WLAN_SSID "Drone"         //Name of the drone visible for devices
-#define WLAN_PASSWORD "dronepw"   //WLAN Password
+#define WLAN_PASSWORD "1234567890"   //WLAN Password
 #define WLAN_CHANNEL "5"          //WLAN Channel
 #define WLAN_TIMEOUT "2500"       //time in microseconds with no transmission that is still considered an active connection TODO: write function that lands the drone after lost connection
 
@@ -84,6 +90,7 @@ float desiredYawSpeed;                         //Angular Yaw speed in Rad/s
 //standard routine:
 void setup()
 {
+  Serial.begin(9600);
   startupWireless();
   startupDMP();
   timeOfLastTransmission = micros();
@@ -91,31 +98,42 @@ void setup()
 
 void loop()     //pushes the drone towards the desired state from the actual state, those two are updated through interrupts
 {
-
+  SerialEvent();
 }
 
 
 //interrupt functions:
 void SerialEvent()                //Refreshes the global Variables that keep track of the desired drone state and updates the timer of when the last transmission took place.
 {
-  if (Serial.read() != '<') return;      //checks if its a desired input from us or junk from the WLAN-module
+  if (!ESP8266.available()) return;
+  if (ESP8266.read() != '<') return;      //checks if its a desired input from us or junk from the WLAN-module
+  else pritGarbage();
   timeOfLastTransmission = micros();
-  while(!Serial.available());			 //wait for input.
-  if (Serial.read() == '#') {                         //checks if its a command
+  while(!ESP8266.available());			 //wait for input.
+  if (ESP8266.read() == '#') {                         //checks if its a command
     desiredYawSpeed = parseSerialPercentage() * (MAX_ANGLE_VELOCITY_YAW / 100);
-    while(!Serial.available());			 //wait for input.
-    Serial.read(); //remove the seperator "|"
+    while(!ESP8266.available());			 //wait for input.
+    ESP8266.read(); //remove the seperator "|"
     desiredVelocityZ = parseSerialPercentage() * (MAX_VELOCITY_Z / 100.0);
-    while(!Serial.available());			 //wait for input.
-    Serial.read(); //remove the seperator "|"
+    while(!ESP8266.available());			 //wait for input.
+    ESP8266.read(); //remove the seperator "|"
     desiredVelocityX = parseSerialPercentage() * (MAX_VELOCITY_X / 100.0);
-    while(!Serial.available());			 //wait for input.
-    Serial.read(); //remove the seperator "|"
+    while(!ESP8266.available());			 //wait for input.
+    ESP8266.read(); //remove the seperator "|"
     desiredVelocityY = parseSerialPercentage() * (MAX_VELOCITY_Y / 100.0);
   } else {
     
   }
-  send(sprintf("%f,%f,%f,%f", desiredYawSpeed, desiredVelocityZ, desiredVelocityX, desiredVelocityY));
+}
+
+void pritGarbage()
+{
+  String output = "";
+  while(ESP8266.available()) {
+    char c = (char)ESP8266.read();
+    output.concat(c);
+  }
+  if (output.length() > 0) Serial.println(output);
 }
 
 void mpuInterrupt()               //Refreshes the global variables that tell the Drone its state. Gets executed everytime the mpu sends INT, thus everytime new data is ready.
@@ -126,7 +144,7 @@ void mpuInterrupt()               //Refreshes the global variables that tell the
   mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
 }
 
-//"normal" functions
+//"normal" functions 
 
 void startupDMP()
 {
@@ -159,35 +177,64 @@ void startupDMP()
 
 void startupWireless()
 {
-  Serial.begin(115200); //The WLAN module is connected via Serial
-  Serial.println("AT+UART_CUR=9600,8,1,0,0"); //Tell it to Slow down
-  Serial.begin(9600);   //Slow down yourself
-  Serial.println("ATE0"); //switches echo (1: on 0: off)
-  Serial.println("AT+CWMODE=3"); //set SoftAP + Station mode
-  Serial.println("AT+CIPMUX=1");  //multiple connections needed for tcp server!!
-  Serial.println("AT+CIPSERVER=1,100"); //start TCP server using port 100
+  delay(100);
+  ESP8266.begin(115200); //The WLAN module is connected via Serial
+  delay(100);
+  pritGarbage();
+  
+  while(!ESP8266);
+  ESP8266.println("AT+RESTORE");//restore all defaults
+  delay(1000);
+  pritGarbage();
+  
+  ESP8266.println("AT+UART_CUR=9600,8,1,0,0"); //Tell it to Slow down
+  delay(100);
+  pritGarbage();
+  
+  ESP8266.begin(9600);   //Slow down yourself
+  while(!ESP8266);
+  ESP8266.println("ATE0"); //switches echo (1: on 0: off)
+  delay(100);
+  pritGarbage();
+  
+  ESP8266.println("AT+CWMODE=3"); //set SoftAP + Station mode
+  delay(100);
+  pritGarbage();
+  
+  ESP8266.println("AT+CIPMUX=1");  //multiple connections needed for tcp server!!
+  delay(100);
+  pritGarbage();
+  
+  ESP8266.println("AT+CIPSERVER=1,100"); //start TCP server using port 100
+  delay(100);
+  pritGarbage();
+  
+  ESP8266.println("AT+CWSAP_CUR=\"" + (String) WLAN_SSID + "\",\"" + (String) WLAN_PASSWORD + "\"," + (String) WLAN_CHANNEL + ",3,1"); //setting SSID, Password, Channel, Encryption (3=WPA2_PSK), Only one user
+  delay(100);
+  pritGarbage();
+  
   Serial.println("AT+CWSAP_CUR=\"" + (String) WLAN_SSID + "\",\"" + (String) WLAN_PASSWORD + "\"," + (String) WLAN_CHANNEL + ",3,1"); //setting SSID, Password, Channel, Encryption (3=WPA2_PSK), Only one user
 }
 
 char parseSerialPercentage()                //Parses the next 4 Characters in Serial Buffer based on the Rules listed at the beginning of this Program
 {
   char percent = 0;
-  while (!(Serial.available() < 4));
-  if (Serial.read() == '+') {
-    percent += (Serial.read() - '0') * 100;
-    percent += (Serial.read() - '0') * 10;
-    percent += (Serial.read() - '0') * 1;
+  while (!(ESP8266.available() < 4));
+  if (ESP8266.read() == '+') {
+    percent += (ESP8266.read() - '0') * 100;
+    percent += (ESP8266.read() - '0') * 10;
+    percent += (ESP8266.read() - '0') * 1;
   } else {
-    percent -= (Serial.read() - '0') * 100;
-    percent -= (Serial.read() - '0') * 10;
-    percent -= (Serial.read() - '0') * 1;
+    percent -= (ESP8266.read() - '0') * 100;
+    percent -= (ESP8266.read() - '0') * 10;
+    percent -= (ESP8266.read() - '0') * 1;
   }
   return percent;
 }
 
 void send(String string)
 {
-  Serial.println("AT+CIPSENDBUF=0," + String(string.length()));
+  ESP8266.println("AT+CIPSENDBUF=0," + String(string.length()));
   delay(2);//is needed for proper sending
-  Serial.println(string);
+  ESP8266.println(string);
 }

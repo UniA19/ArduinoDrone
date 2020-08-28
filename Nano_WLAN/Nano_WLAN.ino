@@ -15,13 +15,15 @@ int AcXOff, AcYOff, AcZOff, TmpOff, GyXOff, GyYOff, GyZOff;
 void setup()
 {
   Serial.begin(9600);
+
+  Serial.println("Startig...");
   
   //Setup WLAN
   ESP8266.begin(115200);
   while(!ESP8266);
-  /*ESP8266.println("AT+RESTORE");//restore all defaults
+  ESP8266.println("AT+RESTORE");//restore all defaults
   delay(1000);
-  getWLAN();*/
+  getWLAN();
   
   ESP8266.println("AT+UART_CUR=9600,8,1,0,0");//change serial connection
   delay(100);
@@ -73,17 +75,18 @@ String getWLAN()
   String output = "";
   while(ESP8266.available()) {
     char c = (char)ESP8266.read();
-    while (c == '<') {
+    /*while (c == '<') {
       while(!ESP8266.available()) delay(1);
       char d = (char)ESP8266.read();
       if (d == '>') {
         send(output);
         Serial.println(output);
         break;
-      }
-      output.concat(d);
-    }
+      }*/
+      output.concat(c);
+    
   }
+  if (output.length() > 1) Serial.println(output);
   return output;
 }
 
